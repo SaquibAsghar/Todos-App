@@ -6,4 +6,3 @@ mongoose.connect("mongodb://localhost:27017/todos-app", {
 	useUnifiedTopology: true,
 	useFindAndModify: false,
 });
-
