@@ -24,24 +24,53 @@ app.get("/users", async (req, res) => {
 // METHOD: GET
 // Get single the user
 app.get("/users/:id", async (req, res) => {
-	const _id = req.params.id;
-	Users.findById(_id)
-		.then((user) => {
+	try {
+		const user = await Users.findById({ _id: req.params.id });
+		if (!user) {
+			return res.status(404).send({
+				error_code: 404,
+				message: "No user found",
+			});
+		}
+
+		res.status(200).send(user);
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
+		});
+	}
+});
+
+// METHOD: PATCH
+// use to update user detail
+app.patch("/users/:id", async (req, res) => {
+	const user_allowed_updates = ["name", "email", "password", "age"];
+	const user_update = Object.keys(req.body);
+	const toContinue = user_update.every((update) => {
+		return user_allowed_updates.includes(update);
+	});
+	if (toContinue) {
+		try {
+			const user = await Users.findByIdAndUpdate(req.params.id, req.body, {
+				new: true,
+				runValidators: true,
+			});
 			if (!user) {
-				return res.status(404).send({
-					error_code: 404,
-					message: "No user found with this id",
-				});
+				return res.status(404).send("No user");
 			}
 
-			return res.status(200).send(user);
-		})
-		.catch((err) =>
+			return res.status(202).send(user);
+		} catch (error) {
 			res.status(500).send({
 				error_code: 500,
 				message: "Something went wrong",
-			})
-		);
+				error,
+			});
+		}
+	}
+
+	return res.status(400).send("Invalid operation")
 });
 
 // METHOD: POST
@@ -52,7 +81,7 @@ app.post("/users", async (req, res) => {
 		await user.save();
 		res.status(201).send(user);
 	} catch (e) {
-		res.status(500).send(e);
+		res.status(400).send(e);
 	}
 });
 
@@ -99,15 +128,18 @@ app.get("/todos/:id", async (req, res) => {
 
 // METHOD: POST
 // Use to Create a new todo
-app.post("/todos", (req, res) => {
+app.post("/todos", async (req, res) => {
 	const todo = new Todos(req.body);
-
-	todo
-		.save()
-		.then(() => {
-			res.status(201).send(todo);
-		})
-		.catch((err) => res.status(400).send(err));
+	try {
+		await todo.save();
+		res.status(201).send(todo);
+	} catch (error) {
+		res.status(400).send({
+			error_code: 400,
+			message: "Something went wrong",
+			error,
+		});
+	}
 });
 
 app.listen(port, () => console.log("running at port number", port));
