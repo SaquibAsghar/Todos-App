@@ -1,8 +1,6 @@
 const express = require("express");
 const Users = require("../database/models/user-model");
 
-const app = express();
-
 const users_route = new express.Router();
 
 // METHOD: GET
