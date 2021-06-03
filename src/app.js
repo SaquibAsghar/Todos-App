@@ -70,7 +70,7 @@ app.patch("/users/:id", async (req, res) => {
 		}
 	}
 
-	return res.status(400).send("Invalid operation")
+	return res.status(400).send("Invalid operation");
 });
 
 // METHOD: POST
@@ -84,6 +84,8 @@ app.post("/users", async (req, res) => {
 		res.status(400).send(e);
 	}
 });
+
+// ----------- TODOS ---------------- //
 
 // METHOD: GET
 // Use to display all the todos
@@ -124,6 +126,32 @@ app.get("/todos/:id", async (req, res) => {
 			message: "Something went wrong",
 		});
 	}
+});
+
+// METHOD: PATCH
+// Update todo
+app.patch("/todos/:id", async (req, res) => {
+	const todo_allowed_update = ["title", "isCompleted"];
+	const todo_update = Object.keys(req.body);
+
+	const toContinue = todo_update.every((update) => {
+		return todo_allowed_update.includes(update);
+	});
+
+	if (toContinue) {
+		const todo = await Todos.findByIdAndUpdate(req.params.id, req.body, {
+			new: true,
+			runValidators: true,
+		});
+		if (!todo) {
+			return res.status(404).send({
+				error_code: 404,
+				message: "No todo found",
+			});
+		}
+		return res.status(200).send(todo);
+	}
+	return res.status(400).send("Bad Operation");
 });
 
 // METHOD: POST
