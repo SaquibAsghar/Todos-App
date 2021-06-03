@@ -11,13 +11,13 @@ app.use(express.json());
 // Get all the users
 app.get("/users", async (req, res) => {
 	try {
-		const users = await Users.find({})
-		if(!users.length){
-			return res.status(404).send("No users present!")
+		const users = await Users.find({});
+		if (!users.length) {
+			return res.status(404).send("No users present!");
 		}
-		res.send(users)
+		res.send(users);
 	} catch (error) {
-		res.status(500).send({error_code: 500, message: "Something went wrong"})
+		res.status(500).send({ error_code: 500, message: "Something went wrong" });
 	}
 });
 
@@ -49,53 +49,52 @@ app.get("/users/:id", async (req, res) => {
 app.post("/users", async (req, res) => {
 	const user = new Users(req.body);
 	try {
-		await user.save()
-		res.status(201).send(user)
+		await user.save();
+		res.status(201).send(user);
 	} catch (e) {
-		res.status(500).send(e)
+		res.status(500).send(e);
 	}
 });
 
 // METHOD: GET
 // Use to display all the todos
 app.get("/todos", async (req, res) => {
-
 	try {
-		const todos = await Todos.find({})
-		if(!todos.length){
-			res.status(404).send({
+		const todos = await Todos.find({});
+		if (!todos.length) {
+			return res.status(404).send({
 				error_code: 404,
-				message: "No Todos found!"
-			})
+				message: "No Todos found!",
+			});
 		}
+		return res.status(200).send(todos);
 	} catch (error) {
 		res.status(500).send({
 			error_code: 500,
 			message: "Something went wrong",
-		})
+		});
 	}
 });
 
 // METHOD: GET
 // Use to display particular todo
-app.get("/todos/:id", (req, res) => {
+app.get("/todos/:id", async (req, res) => {
 	const _id = req.params.id;
-	Todos.findById(_id)
-		.then((todo) => {
-			if (!todo) {
-				return res.status(404).send({
-					error_code: 404,
-					message: "No todo present.",
-				});
-			}
-			return res.status(200).send(todo);
-		})
-		.catch(() => {
-			res.status(500).send({
-				error_code: 500,
-				message: "Something went wrong",
+	try {
+		const todo = await Todos.findById(_id);
+		if (!todo) {
+			return res.status(404).send({
+				error_code: 404,
+				message: "No todo present.",
 			});
+		}
+		return res.status(200).send(todo);
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
 		});
+	}
 });
 
 // METHOD: POST
