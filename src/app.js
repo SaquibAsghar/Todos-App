@@ -73,6 +73,23 @@ app.patch("/users/:id", async (req, res) => {
 	return res.status(400).send("Invalid operation");
 });
 
+// METHOD: DELETE
+// Delete a user
+app.delete("/users/:id", async (req, res) => {
+	try {
+		const user = await Users.findByIdAndDelete(req.params.id);
+		if (!user) {
+			return res.status(404).send("No user found to delete");
+		}
+		return res.status(201).send("User deleted");
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
+			error,
+		});
+	}
+});
 // METHOD: POST
 // Use to Create a new user
 app.post("/users", async (req, res) => {
@@ -124,6 +141,24 @@ app.get("/todos/:id", async (req, res) => {
 		res.status(500).send({
 			error_code: 500,
 			message: "Something went wrong",
+		});
+	}
+});
+
+// METHOD: DELETE
+// Delete a todo
+app.delete("/todos/:id", async (req, res) => {
+	try {
+		const todo = await Todos.findByIdAndDelete(req.params.id);
+		if (!todo) {
+			return res.status(404).send("No todo found to delete");
+		}
+		return res.status(201).send("Todo deleted " + todo);
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
+			error,
 		});
 	}
 });
