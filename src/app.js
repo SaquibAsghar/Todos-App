@@ -1,7 +1,5 @@
 const express = require("express");
 require("./database/mongoose");
-const Users = require("./database/models/user-model");
-const Todos = require("./database/models/todo-model");
 const users_route = require("./routes/users-route");
 const todos_route = require("./routes/todos-route");
 const app = express();
