@@ -10,23 +10,15 @@ app.use(express.json());
 // METHOD: GET
 // Get all the users
 app.get("/users", async (req, res) => {
-	Users.find({})
-		.then((users) => {
-			if (!user.length > 1) {
-				return res.status(404).send({
-					error_code: 404,
-					message: "No users found",
-				});
-			}
-
-			res.status(200).send(users);
-		})
-		.catch((err) =>
-			res.status(500).send({
-				error_code: 500,
-				message: "Something went wrong",
-			})
-		);
+	try {
+		const users = await Users.find({})
+		if(!users.length){
+			return res.status(404).send("No users present!")
+		}
+		res.send(users)
+	} catch (error) {
+		res.status(500).send({error_code: 500, message: "Something went wrong"})
+	}
 });
 
 // METHOD: GET
@@ -54,26 +46,34 @@ app.get("/users/:id", async (req, res) => {
 
 // METHOD: POST
 // Use to Create a new user
-app.post("/users", (req, res) => {
+app.post("/users", async (req, res) => {
 	const user = new Users(req.body);
-	user
-		.save()
-		.then(() => res.status(201).send(user))
-		.catch((err) => res.status(400).send(err));
+	try {
+		await user.save()
+		res.status(201).send(user)
+	} catch (e) {
+		res.status(500).send(e)
+	}
 });
 
 // METHOD: GET
 // Use to display all the todos
-app.get("/todos", (req, res) => {
-	Todos.find({}).then((todos) => {
-		if (!todos.length > 1) {
-			return res.status(404).send({
+app.get("/todos", async (req, res) => {
+
+	try {
+		const todos = await Todos.find({})
+		if(!todos.length){
+			res.status(404).send({
 				error_code: 404,
-				message: "No todos present.",
-			});
+				message: "No Todos found!"
+			})
 		}
-		return res.status(200).send(todos);
-	});
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
+		})
+	}
 });
 
 // METHOD: GET
