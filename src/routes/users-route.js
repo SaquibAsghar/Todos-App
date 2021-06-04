@@ -1,3 +1,4 @@
+const bcryptjs = require("bcryptjs");
 const express = require("express");
 const Users = require("../database/models/user-model");
 
@@ -50,12 +51,11 @@ users_route.patch("/:id", async (req, res) => {
 		return res.status(400).send("Invalid operation");
 	}
 	try {
+		const user = await Users.findById(req.params.id);
 
-		const user = await Users.findById(req.params.id)
+		user_update.forEach((update) => (user[update] = req.body[update]));
 
-		user_update.forEach( update => user[update] = req.body[update] )
-
-		await user.save()
+		await user.save();
 
 		if (!user) {
 			return res.status(404).send("No user");
@@ -98,6 +98,18 @@ users_route.post("/", async (req, res) => {
 	} catch (e) {
 		res.status(400).send(e);
 	}
+});
+
+users_route.post("/login", async (req, res) => {
+	const userDetail = await Users.findOne({ email: req.body.email });
+	const isValidPassword = await bcryptjs.compare(
+		req.body.password,
+		userDetail.password
+	);
+	if (userDetail.email === req.body.email && isValidPassword) {
+		return res.send({ suucess: true, userDetail });
+	}
+	res.status(401).send({ error_code: 401, message: "Credential invalid. Please try again." });
 });
 
 module.exports = users_route;
