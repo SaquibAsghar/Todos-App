@@ -74,25 +74,26 @@ todos_route.patch("/todos/:id", async (req, res) => {
 	});
 
 	if (toContinue) {
-		try{
-			const todo = await Todos.findByIdAndUpdate(req.params.id, req.body, {
-			new: true,
-			runValidators: true,
-		});
-		if (!todo) {
-			return res.status(404).send({
-				error_code: 404,
-				message: "No todo found",
-			});
-		}
-		return res.status(200).send(todo);
-		}catch(error){
+		try {
+			const todo = await Todos.findById(req.params.id);
+
+			todo_update.forEach((update) => (todo[update] = req.body[update]));
+
+			await todo.save();
+
+			if (!todo) {
+				return res.status(404).send({
+					error_code: 404,
+					message: "No todo found",
+				});
+			}
+			return res.status(200).send(todo);
+		} catch (error) {
 			return res.status(400).send({
 				error_code: 400,
-				message: error
-			})
+				message: error,
+			});
 		}
-	
 	}
 	return res.status(400).send("Bad Operation");
 });
