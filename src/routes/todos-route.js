@@ -74,7 +74,8 @@ todos_route.patch("/todos/:id", async (req, res) => {
 	});
 
 	if (toContinue) {
-		const todo = await Todos.findByIdAndUpdate(req.params.id, req.body, {
+		try{
+			const todo = await Todos.findByIdAndUpdate(req.params.id, req.body, {
 			new: true,
 			runValidators: true,
 		});
@@ -85,6 +86,13 @@ todos_route.patch("/todos/:id", async (req, res) => {
 			});
 		}
 		return res.status(200).send(todo);
+		}catch(error){
+			return res.status(400).send({
+				error_code: 400,
+				message: error
+			})
+		}
+	
 	}
 	return res.status(400).send("Bad Operation");
 });
