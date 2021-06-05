@@ -1,15 +1,27 @@
 const mongoose = require("mongoose");
 
-const Todos = mongoose.model("Todos", {
-	title: {
-		type: String,
-		required: true,
-		trim: true,
+const todoSchema = new mongoose.Schema(
+	{
+		title: {
+			type: String,
+			required: true,
+			trim: true,
+		},
+		isCompleted: {
+			type: Boolean,
+			default: false,
+		},
+		owner: {
+			type: mongoose.Schema.Types.ObjectId,
+			required: true,
+			ref: "User",
+		},
 	},
-	isCompleted: {
-		type: Boolean,
-		default: false,
-	},
-});
+	{
+		timestamps: true,
+	}
+);
 
-module.exports= Todos
+const Todos = mongoose.model("Todo", todoSchema);
+
+module.exports = Todos;

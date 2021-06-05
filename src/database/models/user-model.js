@@ -2,6 +2,7 @@ const bcryptjs = require("bcryptjs");
 const mongoose = require("mongoose");
 const validator = require("validator");
 const jwt = require("json-web-token");
+const Todos = require("./todo-model");
 
 const userSchema = new mongoose.Schema({
 	name: {
@@ -49,6 +50,14 @@ const userSchema = new mongoose.Schema({
 			},
 		},
 	],
+}, {
+	timestamps: true
+});
+
+userSchema.virtual("todos", {
+	ref: "Todo",
+	localField: "_id",
+	foreignField: "owner",
 });
 
 userSchema.statics.findByCredential = async function (email, password) {
@@ -73,13 +82,19 @@ userSchema.pre("save", async function () {
 	}
 });
 
+userSchema.pre("remove", async function () {
+	const user = this;
+
+	await Todos.deleteMany({ owner: user._id });
+});
+
 userSchema.methods.toJSON = function () {
 	const user = this;
 	// console.log(user);
-	const userObj = user.toObject()
-	delete userObj.password
-	delete userObj.tokens
-	return userObj
+	const userObj = user.toObject();
+	delete userObj.password;
+	delete userObj.tokens;
+	return userObj;
 };
 
 userSchema.methods.generateAuthToken = async function () {

@@ -1,4 +1,3 @@
-const bcryptjs = require("bcryptjs");
 const express = require("express");
 const Users = require("../database/models/user-model");
 const authenticate = require("../middleware/auth-middleware");
@@ -6,35 +5,14 @@ const authenticate = require("../middleware/auth-middleware");
 const users_route = new express.Router();
 
 // METHOD: GET
-// Get all the users
+// Get the user profile
 users_route.get("/profile", authenticate, async (req, res) => {
 	res.send(req.user);
 });
 
-// METHOD: GET
-// Get single the user
-users_route.get("/:id", async (req, res) => {
-	try {
-		const user = await Users.findById({ _id: req.params.id });
-		if (!user) {
-			return res.status(404).send({
-				error_code: 404,
-				message: "No user found",
-			});
-		}
-
-		res.status(200).send(user);
-	} catch (error) {
-		res.status(500).send({
-			error_code: 500,
-			message: "Something went wrong",
-		});
-	}
-});
-
 // METHOD: PATCH
 // use to update user detail
-users_route.patch("/:id", async (req, res) => {
+users_route.patch("/profile", authenticate, async (req, res) => {
 	const user_allowed_updates = ["name", "email", "password", "age"];
 	const user_update = Object.keys(req.body);
 	const toContinue = user_update.every((update) => {
@@ -44,17 +22,11 @@ users_route.patch("/:id", async (req, res) => {
 		return res.status(400).send("Invalid operation");
 	}
 	try {
-		const user = await Users.findById(req.params.id);
+		user_update.forEach((update) => (req.user[update] = req.body[update]));
 
-		user_update.forEach((update) => (user[update] = req.body[update]));
+		await req.user.save();
 
-		await user.save();
-
-		if (!user) {
-			return res.status(404).send("No user");
-		}
-
-		return res.status(202).send(user);
+		return res.status(202).send(req.user);
 	} catch (error) {
 		res.status(500).send({
 			error_code: 500,
@@ -66,12 +38,9 @@ users_route.patch("/:id", async (req, res) => {
 
 // METHOD: DELETE
 // Delete a user
-users_route.delete("/:id", async (req, res) => {
+users_route.delete("/profile", authenticate, async (req, res) => {
 	try {
-		const user = await Users.findByIdAndDelete(req.params.id);
-		if (!user) {
-			return res.status(404).send("No user found to delete");
-		}
+		await req.user.remove();
 		return res.status(201).send("User deleted");
 	} catch (error) {
 		res.status(500).send({
@@ -105,8 +74,8 @@ users_route.post("/login", async (req, res) => {
 
 		const token = await user.generateAuthToken();
 
-		res.status(200).send({ user, token }); 
-		console.log(user)
+		res.status(200).send({ user, token });
+		console.log(user);
 	} catch (error) {
 		res.status(401).send({
 			error_code: 401,
@@ -127,7 +96,7 @@ users_route.post("/logout", authenticate, async (req, res) => {
 
 		await req.user.save();
 
-		console.log("TOKEN", req.user.tokens)
+		console.log("TOKEN", req.user.tokens);
 
 		return res.status(200).send("Logout Mehal");
 	} catch (error) {
@@ -140,17 +109,12 @@ users_route.post("/logout", authenticate, async (req, res) => {
 
 // METHOD: POST
 // Use for logout from all devices
-users_route.post('/logoutAll', authenticate, async(req, res)=>{
+users_route.post("/logoutAll", authenticate, async (req, res) => {
 	try {
-		req.user.tokens = []
-		await req.user.save()
+		req.user.tokens = [];
+		await req.user.save();
 		return res.status(200).send("Logout from all devices.");
-	} catch (error) {
-		
-	}
-})
-
-
-
+	} catch (error) {}
+});
 
 module.exports = users_route;
