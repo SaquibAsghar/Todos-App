@@ -1,21 +1,14 @@
 const bcryptjs = require("bcryptjs");
 const express = require("express");
 const Users = require("../database/models/user-model");
+const authenticate = require("../middleware/auth-middleware");
 
 const users_route = new express.Router();
 
 // METHOD: GET
 // Get all the users
-users_route.get("/", async (req, res) => {
-	try {
-		const users = await Users.find({});
-		if (!users.length) {
-			return res.status(404).send("No users present!");
-		}
-		res.send(users);
-	} catch (error) {
-		res.status(500).send({ error_code: 500, message: "Something went wrong" });
-	}
+users_route.get("/profile", authenticate, async (req, res) => {
+	res.send(req.user);
 });
 
 // METHOD: GET
@@ -94,13 +87,12 @@ users_route.post("/", async (req, res) => {
 	const user = new Users(req.body);
 	try {
 		await user.save();
-		const token = await user.generateAuthToken()
-		res.status(201).send({user, token});
+		const token = await user.generateAuthToken();
+		res.status(201).send({ user, token });
 	} catch (e) {
 		res.status(400).send(e);
 	}
 });
-
 
 // METHOD: POST
 // Use for user login
@@ -111,25 +103,53 @@ users_route.post("/login", async (req, res) => {
 			req.body.password
 		);
 
-		const token = await user.generateAuthToken()
+		const token = await user.generateAuthToken();
 
-		res.status(200).send({user, token});
+		res.status(200).send({ user, token });
 	} catch (error) {
 		res.status(401).send({
 			error_code: 401,
 			error: error.message,
 		});
 	}
-
-	// const userDetail = await Users.findOne({ email: req.body.email });
-	// const isValidPassword = await bcryptjs.compare(
-	// 	req.body.password,
-	// 	userDetail.password
-	// );
-	// if (userDetail.email === req.body.email && isValidPassword) {
-	// 	return res.send({ suucess: true, userDetail });
-	// }
-	// res.status(401).send({ error_code: 401, message: "Credential invalid. Please try again." });
 });
+
+// METHOD: POST
+// Use for logout
+users_route.post("/logout", authenticate, async (req, res) => {
+	try {
+		const userToken = req.header("Authorization").replace("Bearer ", "");
+		// console.log(userToken)
+		req.user.tokens = req.user.tokens.filter((token) => {
+			return token.token !== userToken;
+		});
+
+		await req.user.save();
+
+		console.log("TOKEN", req.user.tokens)
+
+		return res.status(200).send("Logout Mehal");
+	} catch (error) {
+		res.status(500).send({
+			error_code: 500,
+			message: "Something went wrong",
+		});
+	}
+});
+
+// METHOD: POST
+// Use for logout from all devices
+users_route.post('/logoutAll', authenticate, async(req, res)=>{
+	try {
+		req.user.tokens = []
+		await req.user.save()
+		return res.status(200).send("Logout from all devices.");
+	} catch (error) {
+		
+	}
+})
+
+
+
 
 module.exports = users_route;

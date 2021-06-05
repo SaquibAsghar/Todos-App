@@ -79,7 +79,7 @@ userSchema.methods.generateAuthToken = async function () {
 	const payload = { _id: user.id.toString(), time: new Date() };
 	let token = await jwt.encode(secretKey, payload);
 	token = token.value;
-	console.log(token);
+	// console.log(token);
 	// console.log(user.tokens.push({ token }));
 	// console.log(user.tokens);
 	user.tokens = user.tokens.concat({ token });
