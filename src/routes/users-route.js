@@ -101,15 +101,29 @@ users_route.post("/", async (req, res) => {
 });
 
 users_route.post("/login", async (req, res) => {
-	const userDetail = await Users.findOne({ email: req.body.email });
-	const isValidPassword = await bcryptjs.compare(
-		req.body.password,
-		userDetail.password
-	);
-	if (userDetail.email === req.body.email && isValidPassword) {
-		return res.send({ suucess: true, userDetail });
+	try {
+		const user = await Users.findByCredential(
+			req.body.email,
+			req.body.password
+		);
+
+		res.status(200).send(user);
+	} catch (error) {
+		res.status(401).send({
+			error_code: 401,
+			error: error.message,
+		});
 	}
-	res.status(401).send({ error_code: 401, message: "Credential invalid. Please try again." });
+
+	// const userDetail = await Users.findOne({ email: req.body.email });
+	// const isValidPassword = await bcryptjs.compare(
+	// 	req.body.password,
+	// 	userDetail.password
+	// );
+	// if (userDetail.email === req.body.email && isValidPassword) {
+	// 	return res.send({ suucess: true, userDetail });
+	// }
+	// res.status(401).send({ error_code: 401, message: "Credential invalid. Please try again." });
 });
 
 module.exports = users_route;

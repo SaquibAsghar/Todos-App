@@ -1,4 +1,4 @@
-const bcryptjs = require('bcryptjs')
+const bcryptjs = require("bcryptjs");
 const mongoose = require("mongoose");
 const validator = require("validator");
 
@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
 		required: true,
 		trim: true,
 		lowercase: true,
+		unique: true,
 		validate(val) {
 			if (!validator.isEmail(val)) {
 				throw new Error("Email is not correct");
@@ -39,16 +40,30 @@ const userSchema = new mongoose.Schema({
 			}
 		},
 	},
-})
+});
 
-userSchema.pre('save', async function(){
-	const user = this
-	console.log(user.isModified('password'))
-	if(user.isModified('password')){
-		user.password = await bcryptjs.hash(user.password, 10)
+userSchema.statics.findByCredential = async function (email, password) {
+	const user = await Users.findOne({ email });
+	if (!user) {
+		throw new Error("Invalid credntial. Please try again.");
 	}
-})
+	const isMatch = await bcryptjs.compare(password, user.password);
+	if (!isMatch) {
+		throw new Error("Invalid credntial. Please try again.");
+	}
+
+	return user;
+};
+
+// To hash password when update
+userSchema.pre("save", async function () {
+	const user = this;
+	console.log(user.isModified("password"));
+	if (user.isModified("password")) {
+		user.password = await bcryptjs.hash(user.password, 10);
+	}
+});
 
 const Users = mongoose.model("User", userSchema);
 
-module.exports = Users
+module.exports = Users;
