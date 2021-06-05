@@ -105,7 +105,8 @@ users_route.post("/login", async (req, res) => {
 
 		const token = await user.generateAuthToken();
 
-		res.status(200).send({ user, token });
+		res.status(200).send({ user, token }); 
+		console.log(user)
 	} catch (error) {
 		res.status(401).send({
 			error_code: 401,

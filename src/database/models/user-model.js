@@ -73,6 +73,15 @@ userSchema.pre("save", async function () {
 	}
 });
 
+userSchema.methods.toJSON = function () {
+	const user = this;
+	// console.log(user);
+	const userObj = user.toObject()
+	delete userObj.password
+	delete userObj.tokens
+	return userObj
+};
+
 userSchema.methods.generateAuthToken = async function () {
 	const user = this;
 	const secretKey = "thisismynewuser";
