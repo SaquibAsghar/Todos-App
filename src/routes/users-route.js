@@ -94,12 +94,16 @@ users_route.post("/", async (req, res) => {
 	const user = new Users(req.body);
 	try {
 		await user.save();
-		res.status(201).send(user);
+		const token = await user.generateAuthToken()
+		res.status(201).send({user, token});
 	} catch (e) {
 		res.status(400).send(e);
 	}
 });
 
+
+// METHOD: POST
+// Use for user login
 users_route.post("/login", async (req, res) => {
 	try {
 		const user = await Users.findByCredential(
@@ -107,7 +111,9 @@ users_route.post("/login", async (req, res) => {
 			req.body.password
 		);
 
-		res.status(200).send(user);
+		const token = await user.generateAuthToken()
+
+		res.status(200).send({user, token});
 	} catch (error) {
 		res.status(401).send({
 			error_code: 401,
