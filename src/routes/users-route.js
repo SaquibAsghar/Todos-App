@@ -1,8 +1,30 @@
 const express = require("express");
 const Users = require("../database/models/user-model");
+const error_middleware = require("../middleware/error-middleware");
+const multer = require("multer");
 const authenticate = require("../middleware/auth-middleware");
+const sharp = require("sharp");
 
 const users_route = new express.Router();
+const uploadImage = multer({
+	// dest: "assets/userAvatar/", // destination folder
+	limits: {
+		//sets the max-size of the file
+		fileSize: 1000000,
+	},
+	fileFilter(req, file, cb) {
+		// cb(new Error('File must be a PDF'))
+		// cb(undefined, true)
+		// cb(undefined, false)
+		// if(!file.originalname.endsWith('.jpg')){
+		//     return cb(new Error('Please upload image of jpg format'))
+		// }
+		if (!file.originalname.match(/\.(jpg|jpeg)$/)) {
+			return cb(new Error("Please upload image of jpg/jpeg format"));
+		}
+		return cb(undefined, true);
+	},
+});
 
 // METHOD: GET
 // Get the user profile
@@ -75,7 +97,6 @@ users_route.post("/login", async (req, res) => {
 		const token = await user.generateAuthToken();
 
 		res.status(200).send({ user, token });
-		console.log(user);
 	} catch (error) {
 		res.status(401).send({
 			error_code: 401,
@@ -116,5 +137,69 @@ users_route.post("/logoutAll", authenticate, async (req, res) => {
 		return res.status(200).send("Logout from all devices.");
 	} catch (error) {}
 });
+
+// METHOD: POST
+// Use to upload avatar
+users_route.post(
+	"/profile/avatar-img",
+	authenticate,
+	uploadImage.single("avatar"),
+	async (req, res) => {
+		// req.user.avatar = req.file.buffer;
+		const buffer = await sharp(req.file.buffer)
+		req.user.avatar = await buffer
+			.resize({
+				width: 250,
+				height: 250,
+			})
+			.png()
+			.toBuffer();
+
+		try {
+			await req.user.save();
+			res.status(200).send("Avatar updated successfully");
+		} catch (err) {
+			res.send(err);
+		}
+	},
+	(error, req, res, next) => {
+		res.status(400).send({ error: error.message });
+	}
+);
+
+users_route.delete("/profile/avatar-img", authenticate, async (req, res) => {
+	req.user.avatar = undefined;
+	await req.user.save();
+	res.status(200).send("Avatar removed");
+});
+
+users_route.get("/:id/avatar-img", async (req, res) => {
+	try {
+		const user = await Users.findById(req.params.id);
+		if (!user || !user.avatar) {
+			throw new Error();
+		}
+
+		res.set("Content-Type", "image/png");
+		res.status(200).send(user.avatar);
+	} catch (error) {
+		res.status(404).send("No image found.");
+	}
+});
+
+users_route.post(
+	"/profile/avatar",
+	error_middleware,
+	(req, res) => {
+		try {
+			res.status(200).send("Avatar updated successfully");
+		} catch (err) {
+			res.send(err);
+		}
+	},
+	(error, req, res, next) => {
+		res.status(400).send({ error: error.message });
+	}
+);
 
 module.exports = users_route;

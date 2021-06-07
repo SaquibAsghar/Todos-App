@@ -4,55 +4,61 @@ const validator = require("validator");
 const jwt = require("json-web-token");
 const Todos = require("./todo-model");
 
-const userSchema = new mongoose.Schema({
-	name: {
-		type: String,
-		required: true,
-		lowercase: true,
-		trim: true,
-	},
-	email: {
-		type: String,
-		required: true,
-		trim: true,
-		lowercase: true,
-		unique: true,
-		validate(val) {
-			if (!validator.isEmail(val)) {
-				throw new Error("Email is not correct");
-			}
+const userSchema = new mongoose.Schema(
+	{
+		name: {
+			type: String,
+			required: true,
+			lowercase: true,
+			trim: true,
 		},
-	},
-	password: {
-		type: String,
-		required: true,
-		minLength: 6,
-		validate(val) {
-			if (val.toLowerCase().includes("password")) {
-				throw new Error("Password cannot contain word 'password'");
-			}
-		},
-	},
-	age: {
-		type: Number,
-		default: 18,
-		validate(val) {
-			if (val < 0 || val === 0) {
-				throw new Error("Age must be a positive number.");
-			}
-		},
-	},
-	tokens: [
-		{
-			token: {
-				type: String,
-				required: true,
+		email: {
+			type: String,
+			required: true,
+			trim: true,
+			lowercase: true,
+			unique: true,
+			validate(val) {
+				if (!validator.isEmail(val)) {
+					throw new Error("Email is not correct");
+				}
 			},
 		},
-	],
-}, {
-	timestamps: true
-});
+		password: {
+			type: String,
+			required: true,
+			minLength: 6,
+			validate(val) {
+				if (val.toLowerCase().includes("password")) {
+					throw new Error("Password cannot contain word 'password'");
+				}
+			},
+		},
+		age: {
+			type: Number,
+			default: 18,
+			validate(val) {
+				if (val < 0 || val === 0) {
+					throw new Error("Age must be a positive number.");
+				}
+			},
+		},
+		tokens: [
+			{
+				token: {
+					type: String,
+					required: true,
+				},
+			},
+		],
+		avatar: {
+			type: Buffer,
+		},
+	},
+	{
+		timestamps: true,
+	}
+);
 
 userSchema.virtual("todos", {
 	ref: "Todo",
@@ -94,6 +100,7 @@ userSchema.methods.toJSON = function () {
 	const userObj = user.toObject();
 	delete userObj.password;
 	delete userObj.tokens;
+	delete userObj.avatar;
 	return userObj;
 };
 
