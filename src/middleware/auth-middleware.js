@@ -2,9 +2,8 @@ const jwt = require("json-web-token");
 const User = require("../database/models/user-model");
 const authenticate = async (req, res, next) => {
 	try {
-		const secretKey = "thisismynewuser";
 		const token = req.header("Authorization").replace("Bearer ", "");
-		const decodePayload = jwt.decode(secretKey, token);
+		const decodePayload = jwt.decode(process.env.JWT_SECRET, token);
 		const user = await User.findOne({
 			_id: decodePayload.value._id,
 			"tokens.token": token,

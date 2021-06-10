@@ -106,9 +106,8 @@ userSchema.methods.toJSON = function () {
 
 userSchema.methods.generateAuthToken = async function () {
 	const user = this;
-	const secretKey = "thisismynewuser";
 	const payload = { _id: user.id.toString(), time: new Date() };
-	let token = await jwt.encode(secretKey, payload);
+	let token = await jwt.encode(process.env.JWT_SECRET, payload);
 	token = token.value;
 	// console.log(token);
 	// console.log(user.tokens.push({ token }));
